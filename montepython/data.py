@@ -1206,10 +1206,67 @@ class Data(object):
                 self.cosmo_arguments['sigma8'] = self.cosmo_arguments['S_8'] * ((0.3*h**2) / (omega_b+omega_cdm+omega_nu))**0.5
                 del self.cosmo_arguments[elem]
 
+            #my changes to code
+            elif elem == 'delta_Neff':
+                # in general, delta_Neff is N_eff - N_eff_nu(SM) = N_eff - 3.044. 
+                # However, CLASS does not take in N_eff, but rather N_ur from the purely relativistic species
+
+                # note1: throughout we are assuming N_eff_nu = N_eff_nu(SM) = 3.044
+                # Thus, delta_Neff != 0 means new light relics (not non-standard nu's)
+                try: 
+                    self.cosmo_arguments['N_ncdm']
+                except:
+                    # without any NCDM, N_ur = N_eff and thus N_ur = delta_Neff + 3.044
+                    self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 3.044
+                else:
+                    if self.cosmo_arguments['N_ncdm']==0:
+                        # without any NCDM, N_ur = N_eff and thus N_ur = delta_Neff + 3.044
+                        self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 3.044
+                    else:
+                        # use parametrized temp for BSM relic
+                        T_BSM = max(pow(self.cosmo_arguments[elem]/0.0698217483937,1/4)/2.7255,1e-10)
+
+                        if self.cosmo_arguments['N_ncdm']==1:
+                            # without massive neutrinos (by note1), N_ur=N_eff_nu
+                            self.cosmo_arguments['N_ur'] = 3.044
+                            # with only 1 species, no need to vectorize T_ncdm input
+                            self.cosmo_arguments['T_ncdm'] = T_BSM
+
+                        elif self.cosmo_arguments['N_ncdm']==2:
+                            # Assuming 1 standard massive neutrino and 1 BSM relic
+                            # Setting N_eff_nu = 3.044:
+                            self.cosmo_arguments['N_ur'] = 2.0308
+
+                            # With multiple ncdm species, need to vectorize T_ncdm input. 
+                            # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
+                            self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)
+            
+            elif elem == 'z_tr':
+                try:
+                    T_BSM
+                except:
+                    warnings.warn('Relic temperature not defined. Was delta_Neff properly passed?')
+                omega_BSM = (self.cosmo_arguments[elem]+1)*pow(T_BSM*2.7255,4)/2550102.72076236
+                else:
+                    if self.cosmo_arguments['N_ncdm']==1:
+                        # with only 1 species, no need to vectorize omega_ncdm input
+                        self.cosmo_arguments['omega_ncdm'] = omega_BSM
+
+                    elif self.cosmo_arguments['N_ncdm']==2:
+                        # Assuming 1 standard massive neutrino and 1 BSM relic
+                        # Setting standard omega_mnu:
+                        M_nu = 0.06
+                        omega_mnu = M_nu/93.14
+
+                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
+                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
+                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
+
+
             # Finally, deal with all the parameters ending with __i, where i is
             # an integer. Replace them all with their name without the trailing
             # double underscore, concatenated with each other. The test is
-            # always on the one ending with __1, as it will be the first on the
+            # always on the one ending with vjhb__1, as it will be the first on the
             # list, and deal with all the others.
             elif re.search(r'__1', elem):
                 original_name = re.search(r'(.*)__1', elem).groups()[0]
