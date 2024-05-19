@@ -1246,7 +1246,7 @@ class Data(object):
                     T_BSM
                 except:
                     warnings.warn('Relic temperature not defined. Was delta_Neff properly passed?')
-                omega_BSM = (self.cosmo_arguments[elem]+1)*pow(T_BSM*2.7255,4)/2550102.72076236
+                    omega_BSM = (self.cosmo_arguments[elem]+1)*pow(T_BSM*2.7255,4)/2550102.72076236
                 else:
                     if self.cosmo_arguments['N_ncdm']==1:
                         # with only 1 species, no need to vectorize omega_ncdm input
