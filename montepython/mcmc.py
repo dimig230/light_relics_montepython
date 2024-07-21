@@ -414,6 +414,8 @@ def chain(cosmo, data, command_line):
             # to last accepted after the initial update run?
             for elem in parameter_names:
                 mean[parameter_names.index(elem)] = data.mcmc_parameters[elem]['initial'][0]
+            # 7-20 this is David fixing a montepython bug?:
+            start_jumping_factor = command_line.jumping_factor
 
     # Initialize superupdate
     if command_line.superupdate:
