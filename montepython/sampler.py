@@ -772,7 +772,14 @@ def compute_lkl(cosmo, data):
 
     for likelihood in dictvalues(data.lkl):
         if likelihood.need_update is True:
-            value = likelihood.loglkl(cosmo, data)
+            import traceback
+            try:
+                value = likelihood.loglkl(cosmo, data)
+            except:
+                value = data.boundary_loglike
+                var = traceback.format_exc()
+                print(f'The following error occurred when calling {likelihood.name}: {var}')
+            #value = likelihood.loglkl(cosmo, data)
             # Storing the result
             likelihood.backup_value = value
         # Otherwise, take the existing value
