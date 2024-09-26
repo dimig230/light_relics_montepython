@@ -1229,6 +1229,12 @@ class Data(object):
                         T_BSM = max(pow(self.cosmo_arguments[elem]/0.0698217483937,1/4)/2.7255,1e-10)
 
                         if self.cosmo_arguments['N_ncdm']==1:
+                            #added 9/26/24: chance to have massive neutrino plus dark radiation
+                            #uncomment these lines (and comment next batch) for DR + 1 mnu
+                            # self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 2.0308
+                            # del self.cosmo_arguments[elem]
+                            # #massive neutrino settings set by default
+
                             # without massive neutrinos (by note1), N_ur=N_eff_nu
                             self.cosmo_arguments['N_ur'] = 3.044
                             # with only 1 species, no need to vectorize T_ncdm input
