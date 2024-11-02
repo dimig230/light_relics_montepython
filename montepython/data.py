@@ -1249,7 +1249,30 @@ class Data(object):
                             # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
                             self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)
                             del self.cosmo_arguments[elem]
-            
+
+            elif elem == 'log10z_tr':
+                try:
+                    T_BSM
+                except:
+                    warnings.warn('Relic temperature not defined. Was delta_Neff properly passed?')
+                else:
+                    z_tr = 10**(self.cosmo_arguments[elem])
+                    omega_BSM = (z_tr+1)*pow(T_BSM*2.7255,4)/2550102.72076236
+                    if self.cosmo_arguments['N_ncdm']==1:
+                        # with only 1 species, no need to vectorize omega_ncdm input
+                        self.cosmo_arguments['omega_ncdm'] = omega_BSM
+                        del self.cosmo_arguments[elem]
+                    elif self.cosmo_arguments['N_ncdm']==2:
+                        # Assuming 1 standard massive neutrino and 1 BSM relic
+                        # Setting standard omega_mnu:
+                        M_nu = 0.06
+                        omega_mnu = M_nu/93.14
+
+                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
+                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
+                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
+                        del self.cosmo_arguments[elem]
+                        
             elif elem == 'z_tr':
                 try:
                     T_BSM
