@@ -1250,6 +1250,14 @@ class Data(object):
                             self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)
                             del self.cosmo_arguments[elem]
 
+                        elif self.cosmo_arguments['N_ncdm']==3:
+                            # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
+                            # Setting N_eff_nu = 3.044:
+                            self.cosmo_arguments['N_ur'] = 1.0176
+                            # With multiple ncdm species, need to vectorize T_ncdm input. 
+                            self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)+','+str(0.71611)
+                            del self.cosmo_arguments[elem]
+
             elif elem == 'log10z_tr':
                 try:
                     T_BSM
@@ -1262,6 +1270,7 @@ class Data(object):
                         # with only 1 species, no need to vectorize omega_ncdm input
                         self.cosmo_arguments['omega_ncdm'] = omega_BSM
                         del self.cosmo_arguments[elem]
+
                     elif self.cosmo_arguments['N_ncdm']==2:
                         # Assuming 1 standard massive neutrino and 1 BSM relic
                         # Setting standard omega_mnu:
@@ -1271,6 +1280,20 @@ class Data(object):
                         # With multiple ncdm species, need to vectorize omega_ncdm input. 
                         # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
                         self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
+                        del self.cosmo_arguments[elem]
+
+                    elif self.cosmo_arguments['N_ncdm']==3:
+                        # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
+                        # Setting standard omega_mnu:
+                        M_nu1 = 0.06
+                        omega_mnu1 = M_nu1/93.14
+
+                        M_nu2 = 0.05
+                        omega_mnu2 = M_nu2/93.14
+
+                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
+                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
+                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu1)+','+str(omega_mnu2)
                         del self.cosmo_arguments[elem]
                         
             elif elem == 'z_tr':
@@ -1284,6 +1307,7 @@ class Data(object):
                         # with only 1 species, no need to vectorize omega_ncdm input
                         self.cosmo_arguments['omega_ncdm'] = omega_BSM
                         del self.cosmo_arguments[elem]
+                    
                     elif self.cosmo_arguments['N_ncdm']==2:
                         # Assuming 1 standard massive neutrino and 1 BSM relic
                         # Setting standard omega_mnu:
@@ -1293,6 +1317,20 @@ class Data(object):
                         # With multiple ncdm species, need to vectorize omega_ncdm input. 
                         # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
                         self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
+                        del self.cosmo_arguments[elem]
+                    
+                    elif self.cosmo_arguments['N_ncdm']==3:
+                        # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
+                        # Setting standard omega_mnu:
+                        M_nu1 = 0.06
+                        omega_mnu1 = M_nu1/93.14
+
+                        M_nu2 = 0.05
+                        omega_mnu2 = M_nu2/93.14
+
+                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
+                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
+                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu1)+','+str(omega_mnu2)
                         del self.cosmo_arguments[elem]
 
             # Finally, deal with all the parameters ending with __i, where i is
