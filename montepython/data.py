@@ -1206,132 +1206,117 @@ class Data(object):
                 self.cosmo_arguments['sigma8'] = self.cosmo_arguments['S_8'] * ((0.3*h**2) / (omega_b+omega_cdm+omega_nu))**0.5
                 del self.cosmo_arguments[elem]
 
-            #my changes to code
+            #DI 1-22-25: 
             elif elem == 'delta_Neff':
-                # in general, delta_Neff is N_eff - N_eff_nu(SM) = N_eff - 3.044. 
-                # However, CLASS does not take in N_eff, but rather N_ur from the purely relativistic species
 
-                # note1: throughout we are assuming N_eff_nu = N_eff_nu(SM) = 3.044
-                # Thus, delta_Neff != 0 means new light relics (not non-standard nu's)
-                try: 
-                    self.cosmo_arguments['N_ncdm']
-                except:
-                    # without any NCDM, N_ur = N_eff and thus N_ur = delta_Neff + 3.044
+                # in general, delta_Neff is N_eff - N_eff_nu(SM) = N_eff - 3.044. 
+                # However, CLASS does not take in N_eff, but rather N_ur from the ultra-relativistic species and T_ncdm from the ncdm.
+                # Thus, need to handle differently the cases with and without ncdm.
+
+                # without any NCDM, delta_Neff = delta_N_ur 
+                if ('N_ncdm' not in self.cosmo_arguments) or (self.cosmo_arguments['N_ncdm'] == 0):
                     self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 3.044
                     del self.cosmo_arguments[elem]
+                    
                 else:
-                    if self.cosmo_arguments['N_ncdm']==0:
-                        # without any NCDM, N_ur = N_eff and thus N_ur = delta_Neff + 3.044
-                        self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 3.044
-                        del self.cosmo_arguments[elem]
+                    # currently will assume nonzero N_ncdm and delta_Neff will necessarily mean the delta_Neff comes from the (first) ncdm species (and not from extra ultrarelativistic species). 
+                    # Thus, next lines are commented. Adding this feature would be straightforward but beyond the current scope. 
+                    
+                    # if 'log10z_tr' not in self.cosmo_arguments:
+                        # treat case of SM massive neutrino(s) plus + delta_N_ur 
+                    # else:
+
+                    # we must convert delta_Neff to the appropriate T_ncdm, which depends on rho_ncdm at early times, rho_gamma, and the ultra-relativistic neutrino energy density relative to photons entering into Neff:
+                    g_gamma = 2
+                    rho_gammaT4 = g_gamma*(pi**2)/30
+                    Neff_factor = 7/8*pow(4/11,4/3)
+                    
+                    # if user specified the degeneracy parameter(s) multiplying the PSD(s), extract the first one here. If not, use the default value assumed by CLASS for first species.
+                    if 'deg_ncdm' in self.cosmo_arguments:
+                        if type(self.cosmo_arguments['deg_ncdm']) == str:
+                            deg_ncdm = np.array(self.cosmo_arguments['deg_ncdm'].split(','), dtype='float')
+                            g_ncdm = 2*deg_ncdm[0]
+                        else:
+                            deg_ncdm = np.array(float(self.cosmo_arguments['deg_ncdm']))
+                            g_ncdm = 2*deg_ncdm
                     else:
-                        # use parametrized temp for BSM relic
-                        T_BSM = max(pow(self.cosmo_arguments[elem]/0.0698217483937,1/4)/2.7255,1e-10)
+                        deg_ncdm = np.array(1.)
+                        g_ncdm = 2*deg_ncdm
 
-                        if self.cosmo_arguments['N_ncdm']==1:
-                            #added 9/26/24: chance to have massive neutrino plus dark radiation
-                            #uncomment these lines (and comment next batch) for DR + 1 mnu
-                            # self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 2.0308
-                            # del self.cosmo_arguments[elem]
-                            # #massive neutrino settings set by default
 
-                            # without massive neutrinos (by note1), N_ur=N_eff_nu
-                            self.cosmo_arguments['N_ur'] = 3.044
-                            # with only 1 species, no need to vectorize T_ncdm input
-                            self.cosmo_arguments['T_ncdm'] = T_BSM
-                            del self.cosmo_arguments[elem]
+                    # if user has selected the BE distribution, set the first moment of distribution to reflect this
+                    if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
+                        rho_ncdm_earlyT4 = g_ncdm*(pi**2)/30
+                    # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible first moment is that of FD
+                    else:
+                        rho_ncdm_earlyT4 = g_ncdm*(pi**2)/30*7/8
 
-                        elif self.cosmo_arguments['N_ncdm']==2:
-                            # Assuming 1 standard massive neutrino and 1 BSM relic
-                            # Setting N_eff_nu = 3.044:
-                            self.cosmo_arguments['N_ur'] = 2.0308
-                            # With multiple ncdm species, need to vectorize T_ncdm input. 
-                            # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
-                            self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)
-                            del self.cosmo_arguments[elem]
+                    # store correct T_ncdm for the first (BSM) ncdm species. Further ncdm species assumed to have default T_ncdm (these are the massive neutrinos).
+                    T_BSM = pow(rho_gammaT4/rho_ncdm_earlyT4*self.cosmo_arguments[elem]*Neff_factor,1/4)
+                    T_nu = 0.71611
 
-                        elif self.cosmo_arguments['N_ncdm']==3:
-                            # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
-                            # Setting N_eff_nu = 3.044:
-                            self.cosmo_arguments['N_ur'] = 1.0176
-                            # With multiple ncdm species, need to vectorize T_ncdm input. 
-                            self.cosmo_arguments['T_ncdm'] = str(T_BSM)+','+str(0.71611)+','+str(0.71611)
-                            del self.cosmo_arguments[elem]
-
+                    # the below arrays contain the appropriate inputs for N_ur and T_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos, (3 - (N_ncdm - 1)) massless SM neutrinos, and 1 BSM ncdm species with radiation contribution delta_Neff at early times
+                    N_ur_array = [
+                        3.044,
+                        2.0308,
+                        1.0176,
+                        0.00441
+                    ]
+                    T_ncdm_array = [
+                        T_BSM,
+                        str(T_BSM)+','+str(T_nu),
+                        str(T_BSM)+','+str(T_nu)+','+str(T_nu),
+                        str(T_BSM)+','+str(T_nu)+','+str(T_nu)+','+str(T_nu),
+                    ]
+                    
+                    # enter CLASS
+                    self.cosmo_arguments['N_ur'] = N_ur_array[self.cosmo_arguments['N_ncdm']-1]
+                    self.cosmo_arguments['T_ncdm'] = T_ncdm_array[self.cosmo_arguments['N_ncdm']-1]
+                    
             elif elem == 'log10z_tr':
-                try:
-                    T_BSM
-                except:
-                    warnings.warn('Relic temperature not defined. Was delta_Neff properly passed?')
-                else:
+                # check that delta_Neff is also being sampled
+                if 'delta_Neff' in self.cosmo_arguments:
                     z_tr = 10**(self.cosmo_arguments[elem])
-                    omega_BSM = (z_tr+1)*pow(T_BSM*2.7255,4)/2550102.72076236
-                    if self.cosmo_arguments['N_ncdm']==1:
-                        # with only 1 species, no need to vectorize omega_ncdm input
-                        self.cosmo_arguments['omega_ncdm'] = omega_BSM
-                        del self.cosmo_arguments[elem]
+                    
+                    # store relevant constants
+                    zeta3 = 1.2020569031595942
+                    T_CMB = 2.7255
+                    kelvin_to_eV = 8.617333262e-05
+                    
+                    # if user has selected the BE distribution, set the zeroth moment of distribution to reflect this
+                    if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
+                        n_ncdm_earlyT3 = g_ncdm*zeta3/(pi**2)
+                    # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible zeroth moment is that of FD
+                    else:
+                        n_ncdm_earlyT3 = g_ncdm*zeta3/(pi**2)*3/4
 
-                    elif self.cosmo_arguments['N_ncdm']==2:
-                        # Assuming 1 standard massive neutrino and 1 BSM relic
-                        # Setting standard omega_mnu:
-                        M_nu = 0.06
-                        omega_mnu = M_nu/93.14
+                    # store correct m_ncdm for the first (BSM) ncdm species. Further ncdm species (the massive neutrinos) assumed to be degenerate in mass. 
+                    m_BSM = (z_tr+1)*rho_ncdm_earlyT4/n_ncdm_earlyT3*(T_BSM*T_CMB*kelvin_to_eV)
 
-                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
-                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
-                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
-                        del self.cosmo_arguments[elem]
-
-                    elif self.cosmo_arguments['N_ncdm']==3:
-                        # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
-                        # Setting standard omega_mnu:
-                        M_nu1 = 0.06
-                        omega_mnu1 = M_nu1/93.14
-
-                        M_nu2 = 0.05
-                        omega_mnu2 = M_nu2/93.14
-
-                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
-                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
-                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu1)+','+str(omega_mnu2)
-                        del self.cosmo_arguments[elem]
+                    # without massive neutrinos, no need to calculate their masses 
+                    if self.cosmo_arguments['N_ncdm'] == 1:
+                        self.cosmo_arguments['m_ncdm'] = m_BSM
+                    # with massive neutrinos, can either enter a total mass or use CLASS's default value of 0.06 eV, corresponding to the minimum total mass in the NH.
+                    else: 
+                        if 'm_nu_tot' in self.cosmo_arguments:
+                            m_nu_i = self.cosmo_arguments['m_nu_tot']/(self.cosmo_arguments['N_ncdm']-1)
+                            del self.cosmo_arguments['m_nu_tot']
+                        else:
+                            m_nu_i = 0.06/(self.cosmo_arguments['N_ncdm']-1)
                         
-            elif elem == 'z_tr':
-                try:
-                    T_BSM
-                except:
-                    warnings.warn('Relic temperature not defined. Was delta_Neff properly passed?')
+                        # store the appropriate inputs for m_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos and 1 BSM ncdm species with transition redshift z_tr and radiation contribution delta_Neff
+                        m_ncdm_array = [
+                            str(m_BSM)+','+str(m_nu_i),
+                            str(m_BSM)+','+str(m_nu_i)+','+str(m_nu_i),
+                            str(m_BSM)+','+str(m_nu_i)+','+str(m_nu_i)+','+str(m_nu_i),
+                        ]
+                        self.cosmo_arguments['m_ncdm'] = m_ncdm_array[self.cosmo_arguments['N_ncdm']-2]
+
+                    del self.cosmo_arguments['delta_Neff']
+                    del self.cosmo_arguments['log10z_tr']
+                        
                 else:
-                    omega_BSM = (self.cosmo_arguments[elem]+1)*pow(T_BSM*2.7255,4)/2550102.72076236
-                    if self.cosmo_arguments['N_ncdm']==1:
-                        # with only 1 species, no need to vectorize omega_ncdm input
-                        self.cosmo_arguments['omega_ncdm'] = omega_BSM
-                        del self.cosmo_arguments[elem]
-                    
-                    elif self.cosmo_arguments['N_ncdm']==2:
-                        # Assuming 1 standard massive neutrino and 1 BSM relic
-                        # Setting standard omega_mnu:
-                        M_nu = 0.06
-                        omega_mnu = M_nu/93.14
-
-                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
-                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
-                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu)
-                        del self.cosmo_arguments[elem]
-                    
-                    elif self.cosmo_arguments['N_ncdm']==3:
-                        # Implemented 11-7-24. Checking that contours hardly change with heavier (inverted hierarchy) neutrinos
-                        # Setting standard omega_mnu:
-                        M_nu1 = 0.06
-                        omega_mnu1 = M_nu1/93.14
-
-                        M_nu2 = 0.05
-                        omega_mnu2 = M_nu2/93.14
-
-                        # With multiple ncdm species, need to vectorize omega_ncdm input. 
-                        # Assuming 1 standard massive neutrino. Can extend to more massive neutrinos 
-                        self.cosmo_arguments['omega_ncdm'] = str(omega_BSM)+','+str(omega_mnu1)+','+str(omega_mnu2)
-                        del self.cosmo_arguments[elem]
+                    raise io_mp.ConfigurationError("log10z_tr as a sampling parameter requires delta_neff as a sampling parameter.")
 
             # Finally, deal with all the parameters ending with __i, where i is
             # an integer. Replace them all with their name without the trailing
