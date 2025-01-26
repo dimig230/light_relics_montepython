@@ -1321,7 +1321,7 @@ class Data(object):
             # Finally, deal with all the parameters ending with __i, where i is
             # an integer. Replace them all with their name without the trailing
             # double underscore, concatenated with each other. The test is
-            # always on the one ending with vjhb__1, as it will be the first on the
+            # always on the one ending with __1, as it will be the first on the
             # list, and deal with all the others.
             elif re.search(r'__1', elem):
                 original_name = re.search(r'(.*)__1', elem).groups()[0]
