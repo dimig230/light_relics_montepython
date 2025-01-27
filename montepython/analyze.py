@@ -2253,7 +2253,7 @@ class Information(object):
                 self.centers = np.append(self.centers,0)
         if hasattr(self, 'to_reorder'):
             if(len(self.to_reorder)>0):
-                # Analyze modification by Tony Zhou #
+                # Analyze modification by Tony Zhou (See pull request 336 in main repository) #
 
                 # Add protection for requested reorder names that only exist for the
                 # model considered. This is useful when comparing multiple models with
