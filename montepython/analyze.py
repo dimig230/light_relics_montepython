@@ -2285,7 +2285,7 @@ class Information(object):
                 # since these might be a lot fewer
 
 
-                # Analyze modification #
+                # Analyze modification by Tony Zhou (cont.) #
 
                 # Add protection for requested reorder names that only exist for the
                 # model considered. This is useful when comparing multiple models with
@@ -2299,7 +2299,7 @@ class Information(object):
 
                 # End analyze modification #
                 if(len(indices)>0):
-                  # Analyze modification #
+                  # Analyze modification by Tony Zhou (cont.) #
 
                   # Added to the following line the dtype="int" argument to prevent the subsequent lines
                   # from throwing an error when a float data is used as an index.
