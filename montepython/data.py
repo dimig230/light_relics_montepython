@@ -1260,7 +1260,7 @@ class Data(object):
 
                     # we must convert delta_Neff to the appropriate T_ncdm, which depends on rho_ncdm at early times, rho_gamma, and the ultra-relativistic neutrino energy density relative to photons entering into Neff:
                     g_gamma = 2
-                    rho_gammaT4 = g_gamma*(pi**2)/30
+                    rho_gammaT4 = g_gamma*(math.pi**2)/30
                     Neff_factor = 7/8*pow(4/11,4/3)
                     
                     # if user specified the degeneracy parameter(s) multiplying the PSD(s), extract the first one here. If not, use the default value assumed by CLASS for first species.
@@ -1278,10 +1278,10 @@ class Data(object):
 
                     # if user has selected the BE distribution, set the first moment of distribution to reflect this
                     if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
-                        rho_ncdm_earlyT4 = g_ncdm*(pi**2)/30
+                        rho_ncdm_earlyT4 = g_ncdm*(math.pi**2)/30
                     # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible first moment is that of FD
                     else:
-                        rho_ncdm_earlyT4 = g_ncdm*(pi**2)/30*7/8
+                        rho_ncdm_earlyT4 = g_ncdm*(math.pi**2)/30*7/8
 
                     # store correct T_ncdm for the first (BSM) ncdm species. Further ncdm species assumed to have default T_ncdm (these are the massive neutrinos).
                     T_BSM = pow(rho_gammaT4/rho_ncdm_earlyT4*self.cosmo_arguments[elem]*Neff_factor,1/4)
@@ -1317,10 +1317,10 @@ class Data(object):
                     
                     # if user has selected the BE distribution, set the zeroth moment of distribution to reflect this
                     if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
-                        n_ncdm_earlyT3 = g_ncdm*zeta3/(pi**2)
+                        n_ncdm_earlyT3 = g_ncdm*zeta3/(math.pi**2)
                     # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible zeroth moment is that of FD
                     else:
-                        n_ncdm_earlyT3 = g_ncdm*zeta3/(pi**2)*3/4
+                        n_ncdm_earlyT3 = g_ncdm*zeta3/(math.pi**2)*3/4
 
                     # store correct m_ncdm for the first (BSM) ncdm species. Further ncdm species (the massive neutrinos) assumed to be degenerate in mass. 
                     m_BSM = (z_tr+1)*rho_ncdm_earlyT4/n_ncdm_earlyT3*(T_BSM*T_CMB*kelvin_to_eV)
