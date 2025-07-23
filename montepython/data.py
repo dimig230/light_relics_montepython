@@ -1330,12 +1330,16 @@ class Data(object):
                         self.cosmo_arguments['m_ncdm'] = m_BSM
                     # with massive neutrinos, can either enter a total mass or use CLASS's default value of 0.06 eV, corresponding to the minimum total mass in the NH.
                     else: 
-                        # NOTICE THAT THE NON m_nu_tot=0.06eV CASE DOESN'T WORK!! m_nu_tot IS PERMANENTLY DELETED AFTER FIRST STEP
-                        if 'm_nu_tot' in self.cosmo_arguments:
-                            m_nu_i = self.cosmo_arguments['m_nu_tot']/(self.cosmo_arguments['N_ncdm']-1)
-                            del self.cosmo_arguments['m_nu_tot']
-                        else:
-                            m_nu_i = 0.06/(self.cosmo_arguments['N_ncdm']-1)
+                        # # NOTICE THAT THE NON m_nu_tot=0.06eV CASE DOESN'T WORK!! m_nu_tot IS PERMANENTLY DELETED AFTER FIRST STEP
+                        # if 'm_nu_tot' in self.cosmo_arguments:
+                        #     m_nu_i = self.cosmo_arguments['m_nu_tot']/(self.cosmo_arguments['N_ncdm']-1)
+                        #     del self.cosmo_arguments['m_nu_tot']
+                        # else:
+                        #     m_nu_i = 0.06/(self.cosmo_arguments['N_ncdm']-1)
+                        
+                        # Hardcoding in m_nu_tot instead:
+                        m_nu_tot = 0.06
+                        m_nu_i = m_nu_tot/(self.cosmo_arguments['N_ncdm']-1)
                         
                         # store the appropriate inputs for m_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos and 1 BSM ncdm species with transition redshift z_tr and radiation contribution delta_Neff
                         m_ncdm_array = [
