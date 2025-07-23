@@ -1257,12 +1257,14 @@ class Data(object):
                     # if 'log10z_tr' not in self.cosmo_arguments:
                         # treat case of SM massive neutrino(s) plus + delta_N_ur 
                     # else:
-
-                    # we must convert delta_Neff to the appropriate T_ncdm, which depends on rho_ncdm at early times, rho_gamma, and the ultra-relativistic neutrino energy density relative to photons entering into Neff:
-                    g_gamma = 2
-                    rho_gammaT4 = g_gamma*(math.pi**2)/30
-                    Neff_factor = 7/8*pow(4/11,4/3)
                     
+                    # store relevant constants
+                    zeta3 = 1.2020569031595942
+                    T0_CMB = 2.7255
+                    kelvin_to_eV = 8.617333262e-05
+                    # this is neutrino temp (in units of photon temp) in the instantaneous decoupling limit (as this is how Neff is defined)
+                    T0_nu = pow(4/11,1/3)
+
                     # if user specified the degeneracy parameter(s) multiplying the PSD(s), extract the first one here. If not, use the default value assumed by CLASS for first species.
                     if 'deg_ncdm' in self.cosmo_arguments:
                         if type(self.cosmo_arguments['deg_ncdm']) == str:
@@ -1275,16 +1277,30 @@ class Data(object):
                         deg_ncdm = np.array(1.)
                         g_ncdm = 2*deg_ncdm
 
-
-                    # if user has selected the BE distribution, set the first moment of distribution to reflect this
-                    if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
-                        rho_ncdm_earlyT4 = g_ncdm*(math.pi**2)/30
-                    # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible first moment is that of FD
+                    # if user has specified the distribution (via ncdm_psd_parameters as defined in background_ncdm_distribution), set its zeroth and first moments:
+                    if ('ncdm_psd_parameters' in self.cosmo_arguments):
+                        #BE:
+                        if (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
+                            Q0_L = 2*zeta3
+                            Q1_L = (math.pi**4)/15
+                        #LN:
+                        elif (self.cosmo_arguments['ncdm_psd_parameters'][0] == '2'):
+                            sigma = self.cosmo_arguments['ncdm_psd_parameters'][1]
+                            Q0_L = math.exp(1/2*(2*sigma)**2)
+                            Q1_L = math.exp(1/2*(3*sigma)**2)
+                        #RD:
+                        elif (self.cosmo_arguments['ncdm_psd_parameters'][0] == '3'):
+                            Q0_L = 4.28042752139
+                            Q1_L = 1.68179913534
+                    # our background.c modification assumes if the distribution has not been specified it is FD:
                     else:
-                        rho_ncdm_earlyT4 = g_ncdm*(math.pi**2)/30*7/8
+                        Q0_L = 2*zeta3*3/4
+                        Q1_L = (math.py**4)/15*7/8
 
-                    # store correct T_ncdm for the first (BSM) ncdm species. Further ncdm species assumed to have default T_ncdm (these are the massive neutrinos).
-                    T_BSM = pow(rho_gammaT4/rho_ncdm_earlyT4*self.cosmo_arguments[elem]*Neff_factor,1/4)
+                    # store correct T_ncdm (in units of photon temp) for the first ncdm species. Further ncdm species assumed to have default T_ncdm = 0.71611 (these are the massive neutrinos).
+                    T0_L = T0_nu*pow(self.cosmo_arguments[elem]*2/g_ncdm*(7*math.pi**4/120)/Q1_L,1/4)
+
+                    # this is the more accurate neutrino temperature (in units of photon temp) for CLASS input, see CLASS explanatory.ini 
                     T_nu = 0.71611
 
                     # the below arrays contain the appropriate inputs for N_ur and T_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos, (3 - (N_ncdm - 1)) massless SM neutrinos, and 1 BSM ncdm species with radiation contribution delta_Neff at early times
@@ -1295,13 +1311,13 @@ class Data(object):
                         0.00441
                     ]
                     T_ncdm_array = [
-                        T_BSM,
-                        str(T_BSM)+','+str(T_nu),
-                        str(T_BSM)+','+str(T_nu)+','+str(T_nu),
-                        str(T_BSM)+','+str(T_nu)+','+str(T_nu)+','+str(T_nu),
+                        T0_L,
+                        str(T0_L)+','+str(T_nu),
+                        str(T0_L)+','+str(T_nu)+','+str(T_nu),
+                        str(T0_L)+','+str(T_nu)+','+str(T_nu)+','+str(T_nu),
                     ]
                     
-                    # enter CLASS
+                    # enter mcmc cosmo parameters into CLASS
                     self.cosmo_arguments['N_ur'] = N_ur_array[self.cosmo_arguments['N_ncdm']-1]
                     self.cosmo_arguments['T_ncdm'] = T_ncdm_array[self.cosmo_arguments['N_ncdm']-1]
                     
@@ -1309,43 +1325,31 @@ class Data(object):
                 # check that delta_Neff is also being sampled
                 if 'delta_Neff' in self.cosmo_arguments:
                     z_tr = 10**(self.cosmo_arguments[elem])
-                    
-                    # store relevant constants
-                    zeta3 = 1.2020569031595942
-                    T_CMB = 2.7255
-                    kelvin_to_eV = 8.617333262e-05
-                    
-                    # if user has selected the BE distribution, set the zeroth moment of distribution to reflect this
-                    if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
-                        n_ncdm_earlyT3 = g_ncdm*zeta3/(math.pi**2)
-                    # As of 1-22-25 only have BE or FD/distributions matched to FD. Thus, only other possible zeroth moment is that of FD
-                    else:
-                        n_ncdm_earlyT3 = g_ncdm*zeta3/(math.pi**2)*3/4
 
-                    # store correct m_ncdm for the first (BSM) ncdm species. Further ncdm species (the massive neutrinos) assumed to be degenerate in mass. 
-                    m_BSM = (z_tr+1)*rho_ncdm_earlyT4/n_ncdm_earlyT3*(T_BSM*T_CMB*kelvin_to_eV)
-
+                    # store correct m_ncdm for the first ncdm species. Further ncdm species (the massive neutrinos) assumed to be degenerate in mass. 
+                    m_L = (z_tr+1)*(T0_L*T0_CMB*kelvin_to_eV)*Q1_L/Q0_L
+                    
                     # without massive neutrinos, no need to calculate their masses 
                     if self.cosmo_arguments['N_ncdm'] == 1:
-                        self.cosmo_arguments['m_ncdm'] = m_BSM
+                        self.cosmo_arguments['m_ncdm'] = m_L
                     # with massive neutrinos, can either enter a total mass or use CLASS's default value of 0.06 eV, corresponding to the minimum total mass in the NH.
                     else: 
-                        # # NOTICE THAT THE NON m_nu_tot=0.06eV CASE DOESN'T WORK!! m_nu_tot IS PERMANENTLY DELETED AFTER FIRST STEP
+                        # NOTICE THAT THE NON m_nu_tot=0.06eV CASE DOESN'T WORK!! m_nu_tot IS PERMANENTLY DELETED AFTER FIRST STEP
                         # if 'm_nu_tot' in self.cosmo_arguments:
                         #     m_nu_i = self.cosmo_arguments['m_nu_tot']/(self.cosmo_arguments['N_ncdm']-1)
                         #     del self.cosmo_arguments['m_nu_tot']
                         # else:
                         #     m_nu_i = 0.06/(self.cosmo_arguments['N_ncdm']-1)
-                        
-                        # Hardcoding in m_nu_tot instead:
+
+                        # Since the above doesn't work, I resort to hardcoding in m_nu_tot instead. This is the total mass in the (degenerate) neutrino hierarchy:
                         m_nu_tot = 0.06
                         m_nu_i = m_nu_tot/(self.cosmo_arguments['N_ncdm']-1)
                         
                         # store the appropriate inputs for m_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos and 1 BSM ncdm species with transition redshift z_tr and radiation contribution delta_Neff
                         m_ncdm_array = [
-                            str(m_BSM)+','+str(m_nu_i),
-                            str(m_BSM)+','+str(m_nu_i)+','+str(m_nu_i),
-                            str(m_BSM)+','+str(m_nu_i)+','+str(m_nu_i)+','+str(m_nu_i),
+                            str(m_L)+','+str(m_nu_i),
+                            str(m_L)+','+str(m_nu_i)+','+str(m_nu_i),
+                            str(m_L)+','+str(m_nu_i)+','+str(m_nu_i)+','+str(m_nu_i),
                         ]
                         self.cosmo_arguments['m_ncdm'] = m_ncdm_array[self.cosmo_arguments['N_ncdm']-2]
 
