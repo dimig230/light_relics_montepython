@@ -1285,7 +1285,7 @@ class Data(object):
                             Q1_L = (math.pi**4)/15
                         #LN:
                         elif (self.cosmo_arguments['ncdm_psd_parameters'][0] == '2'):
-                            sigma = self.cosmo_arguments['ncdm_psd_parameters'][1]
+                            sigma = np.array(self.cosmo_arguments['ncdm_psd_parameters'].split(','), dtype='float')[1]
                             Q0_L = math.exp(1/2*(2*sigma)**2)
                             Q1_L = math.exp(1/2*(3*sigma)**2)
                         #RD:
