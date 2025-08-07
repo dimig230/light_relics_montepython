@@ -1285,7 +1285,12 @@ class Data(object):
                             Q1_L = (math.pi**4)/15
                         #LN:
                         elif (self.cosmo_arguments['ncdm_psd_parameters'][0] == '2'):
-                            sigma = np.array(self.cosmo_arguments['ncdm_psd_parameters'].split(','), dtype='float')[1]
+                            #if we are sampling over sigma, get it here
+                            if 'sigma' in self.cosmo_arguments:
+                                sigma = self.cosmo_arguments['sigma']
+                            #if not, should be fixed in second entry of ncdm_psd_parameters
+                            else:
+                                sigma = np.array(self.cosmo_arguments['ncdm_psd_parameters'].split(','), dtype='float')[1]
                             Q0_L = math.exp(1/2*(2*sigma)**2)
                             Q1_L = math.exp(1/2*(3*sigma)**2)
                         #RD:
@@ -1358,6 +1363,43 @@ class Data(object):
                         
                 else:
                     raise io_mp.ConfigurationError("log10z_tr as a sampling parameter requires delta_neff as a sampling parameter.")
+            
+            elif elem == 'sigma':
+                #need to update ncdm_psd_parameters and set quadrature strategy
+                self.cosmo_arguments['ncdm_psd_parameters'] = str(2)+', '+str(sigma)+', '+str(0)
+                # need to tabulate quadrature settings as comma separated string with as many entries as NCDM species
+                # however, we want the default quad sampler (corresponding to a ncdm_quadrature_strategy value of 0) 
+                # for any additional species (the massive neutrinos). This is done below:
+                #set the number of momentum bins for custom sampling
+                N_bins = 20
+                N_bins_array = [
+                    str(N_bins),
+                    str(N_bins)+','+str(0),
+                    str(N_bins)+','+str(0)+','+str(0),
+                    str(N_bins)+','+str(0)+','+str(0)+','+str(0),
+                ]
+                    
+                # testing finds our custom sampler (quad_strat=3) outperforms the default sampler (quad_strat=0) for sigmas near the extrema
+                if sigma < 0.24 or sigma > 0.77:
+                    quad_strat = 3
+                    # our strategy does not interpolate for the number of bins, so pass it manually here
+                    self.cosmo_arguments['ncdm_N_momentum_bins'] = N_bins_array[self.cosmo_arguments['N_ncdm']-1]
+                    #values for these settings don't matter as our custom sampler interpolates for them
+                    self.cosmo_arguments['ncdm_maximum_q'] = N_bins_array[self.cosmo_arguments['N_ncdm']-1]
+                    self.cosmo_arguments['ncdm_a'] = N_bins_array[self.cosmo_arguments['N_ncdm']-1]
+                else:
+                    quad_strat = 0
+                #set which sampler to use
+                quad_settings_array = [
+                    str(quad_strat),
+                    str(quad_strat)+','+str(0),
+                    str(quad_strat)+','+str(0)+','+str(0),
+                    str(quad_strat)+','+str(0)+','+str(0)+','+str(0),
+                ]
+                self.cosmo_arguments['ncdm_quadrature_strategy'] = quad_settings_array[self.cosmo_arguments['N_ncdm']-1]
+               
+                #Delete non cosmo param
+                del self.cosmo_arguments[elem]
 
             # Finally, deal with all the parameters ending with __i, where i is
             # an integer. Replace them all with their name without the trailing
