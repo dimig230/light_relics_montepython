@@ -1300,7 +1300,7 @@ class Data(object):
                     # our background.c modification assumes if the distribution has not been specified it is FD:
                     else:
                         Q0_L = 2*zeta3*3/4
-                        Q1_L = (math.py**4)/15*7/8
+                        Q1_L = (math.pi**4)/15*7/8
 
                     # store correct T_ncdm (in units of photon temp) for the first ncdm species. Further ncdm species assumed to have default T_ncdm = 0.71611 (these are the massive neutrinos).
                     T0_L = T0_nu*pow(self.cosmo_arguments[elem]*2/g_ncdm*(7*math.pi**4/120)/Q1_L,1/4)
