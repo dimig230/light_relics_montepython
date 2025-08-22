@@ -1277,8 +1277,8 @@ class Data(object):
                         deg_ncdm = np.array(1.)
                         g_ncdm = 2*deg_ncdm
 
-                    # if user has specified the distribution (via ncdm_psd_parameters as defined in background_ncdm_distribution), set its zeroth and first moments:
-                    if ('ncdm_psd_parameters' in self.cosmo_arguments):
+                    # if user has specified the distribution to something other than FD (via ncdm_psd_parameters as defined in background_ncdm_distribution), set its zeroth and first moments:
+                    if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] != '0'):
                         #BE:
                         if (self.cosmo_arguments['ncdm_psd_parameters'][0] == '1'):
                             Q0_L = 2*zeta3
@@ -1297,7 +1297,7 @@ class Data(object):
                         elif (self.cosmo_arguments['ncdm_psd_parameters'][0] == '3'):
                             Q0_L = 4.28042752139
                             Q1_L = 1.68179913534
-                    # our background.c modification assumes if the distribution has not been specified it is FD:
+                    # otherwise, set the moments to those of FD:
                     else:
                         Q0_L = 2*zeta3*3/4
                         Q1_L = (math.pi**4)/15*7/8
