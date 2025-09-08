@@ -1,0 +1,6 @@
+# PR4 values for tau (following Astro-ph/2503.04671)
+# This likelihood is a prior on tau_reio inspired
+# by simlow, the low multipole polarization 
+# likelihood from the Planck 2016 paper
+PR4_tau_prior.tau    = 0.0577
+PR4_tau_prior.sigma  = 0.0062
