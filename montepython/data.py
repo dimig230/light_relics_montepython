@@ -1240,23 +1240,30 @@ class Data(object):
 
             #DI 1-22-25: 
             elif elem == 'delta_Neff':
-
+            
                 # in general, delta_Neff is N_eff - N_eff_nu(SM) = N_eff - 3.044. 
                 # However, CLASS does not take in N_eff, but rather N_ur from the ultra-relativistic species and T_ncdm from the ncdm.
-                # Thus, need to handle differently the cases with and without ncdm.
+                # Thus, need to handle differently the cases with and without non-standard ncdm.
+            
+                # this array contains the appropriate inputs for N_ur to recover N_eff_nu(SM) with 0,1,2,3 massive nu's
+                N_ur_nu = [
+                    3.044,
+                    2.0308,
+                    1.0176,
+                    0.00441
+                ]
 
-                # without any NCDM, delta_Neff = delta_N_ur 
-                if ('N_ncdm' not in self.cosmo_arguments) or (self.cosmo_arguments['N_ncdm'] == 0):
-                    self.cosmo_arguments['N_ur'] = self.cosmo_arguments[elem] + 3.044
+                # we assume that the non-standard NCDM is extra massive species, not weird stuff in the massive neutrinos
+                # thus, without any non-standard NCDM, delta_Neff = delta_N_ur:
+                if 'log10z_tr' not in self.cosmo_arguments:
+                    # in case user didn't explicitly specify the absence of massive nu's:
+                    if ('N_ncdm' not in self.cosmo_arguments): self.cosmo_arguments['N_ncdm']=0
+                    # N_ur is N_ur from the massless nu's + delta_Neff
+                    self.cosmo_arguments['N_ur'] = N_ur_nu[self.cosmo_arguments['N_ncdm']]+self.cosmo_arguments[elem]
                     del self.cosmo_arguments[elem]
                     
                 else:
-                    # currently will assume nonzero N_ncdm and delta_Neff will necessarily mean the delta_Neff comes from the (first) ncdm species (and not from extra ultrarelativistic species). 
-                    # Thus, next lines are commented. Adding this feature would be straightforward but beyond the current scope. 
-                    
-                    # if 'log10z_tr' not in self.cosmo_arguments:
-                        # treat case of SM massive neutrino(s) plus + delta_N_ur 
-                    # else:
+                    # with both delta_Neff and log10z_tr entered, we assume the delta_Neff comes from the (first) ncdm species. 
                     
                     # store relevant constants
                     zeta3 = 1.2020569031595942
@@ -1264,7 +1271,7 @@ class Data(object):
                     kelvin_to_eV = 8.617333262e-05
                     # this is neutrino temp (in units of photon temp) in the instantaneous decoupling limit (as this is how Neff is defined)
                     T0_nu = pow(4/11,1/3)
-
+            
                     # if user specified the degeneracy parameter(s) multiplying the PSD(s), extract the first one here. If not, use the default value assumed by CLASS for first species.
                     if 'deg_ncdm' in self.cosmo_arguments:
                         if type(self.cosmo_arguments['deg_ncdm']) == str:
@@ -1276,7 +1283,7 @@ class Data(object):
                     else:
                         deg_ncdm = np.array(1.)
                         g_ncdm = 2*deg_ncdm
-
+            
                     # if user has specified the distribution to something other than FD (via ncdm_psd_parameters as defined in background_ncdm_distribution), set its zeroth and first moments:
                     if ('ncdm_psd_parameters' in self.cosmo_arguments) and (self.cosmo_arguments['ncdm_psd_parameters'][0] != '0'):
                         #BE:
@@ -1301,20 +1308,14 @@ class Data(object):
                     else:
                         Q0_L = 2*zeta3*3/4
                         Q1_L = (math.pi**4)/15*7/8
-
+            
                     # store correct T_ncdm (in units of photon temp) for the first ncdm species. Further ncdm species assumed to have default T_ncdm = 0.71611 (these are the massive neutrinos).
                     T0_L = T0_nu*pow(self.cosmo_arguments[elem]*2/g_ncdm*(7*math.pi**4/120)/Q1_L,1/4)
-
+            
                     # this is the more accurate neutrino temperature (in units of photon temp) for CLASS input, see CLASS explanatory.ini 
                     T_nu = 0.71611
-
-                    # the below arrays contain the appropriate inputs for N_ur and T_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos, (3 - (N_ncdm - 1)) massless SM neutrinos, and 1 BSM ncdm species with radiation contribution delta_Neff at early times
-                    N_ur_array = [
-                        3.044,
-                        2.0308,
-                        1.0176,
-                        0.00441
-                    ]
+            
+                    # the below array contains the appropriate inputs for T_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos, (3 - (N_ncdm - 1)) massless SM neutrinos, and 1 BSM ncdm species with radiation contribution delta_Neff at early times
                     T_ncdm_array = [
                         T0_L,
                         str(T0_L)+','+str(T_nu),
@@ -1323,7 +1324,7 @@ class Data(object):
                     ]
                     
                     # enter mcmc cosmo parameters into CLASS
-                    self.cosmo_arguments['N_ur'] = N_ur_array[self.cosmo_arguments['N_ncdm']-1]
+                    self.cosmo_arguments['N_ur'] = N_ur_nu[self.cosmo_arguments['N_ncdm']-1]
                     self.cosmo_arguments['T_ncdm'] = T_ncdm_array[self.cosmo_arguments['N_ncdm']-1]
                     
             elif elem == 'log10z_tr':
