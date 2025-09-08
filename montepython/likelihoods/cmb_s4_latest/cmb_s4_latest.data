@@ -1,0 +1,2 @@
+# Select which dataset config (in data/cmb_s4_latest) to use
+cmb_s4_latest.data_file = 's4wide_galaxy1_AZ'

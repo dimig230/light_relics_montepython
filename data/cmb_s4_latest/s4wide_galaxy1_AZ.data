@@ -1,0 +1,7 @@
+# CMB-S4 PBDR mock likelihood (AZ mask, galaxy1)
+npy_file = /path/to/s4wide_202310xx_pbdr_config_ilc_galaxy1_27-39-93-145-225-278_TT-EE_galmask1_AZ_lmax6500_for7years.npy
+
+# Optional (defaults are fine)
+# spectra = TT,EE
+# use_TE = no
+lmax = 6500
