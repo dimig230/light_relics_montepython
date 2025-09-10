@@ -1,0 +1,107 @@
+#------Experiments to test (separated with commas)-----
+
+data.experiments = ['cmb_s4_latest','PR4_tau_prior']
+cmb_s4_latest.data_file = 's4wide_galaxy1_AZ'
+
+#------ Settings for the over-sampling.
+# The first element will always be set to 1, for it is the sampling of the
+# cosmological parameters. The other numbers describe the over sampling of the
+# nuisance parameter space. This array must have the same dimension as the
+# number of blocks in your run (so, 1 for cosmological parameters, and then 1
+# for each experiment with varying nuisance parameters).
+# Note that when using Planck likelihoods, you definitely want to use [1, 4],
+# to oversample as much as possible the 14 nuisance parameters.
+# Remember to order manually the experiments from slowest to fastest (putting
+# Planck as the first set of experiments should be a safe bet, except if you
+# also have LSS experiments).
+# If you have experiments without nuisance, you do not need to specify an
+# additional entry in the over_sampling list (notice for instance that, out of
+# the three Planck likelihoods used, only Planck_highl requires nuisance
+# parameters, therefore over_sampling has a length of two (cosmology, plus one
+# set of nuisance).
+data.over_sampling=[1]
+
+#------ Parameter list -------
+
+# data.parameters[class name] = [mean, min, max, 1-sigma, scale, role]
+# - if min max irrelevant, put to None
+# - if fixed, put 1-sigma to 0
+# - if scale irrelevant, put to 1, otherwise to the appropriate factor
+# - role is either 'cosmo', 'nuisance' or 'derived'. You should put the derived
+# parameters at the end, and in case you are using the `-j fast` Cholesky
+# decomposition, you should order your nuisance parameters from slowest to
+# fastest.
+
+# Cosmological parameters list
+
+data.parameters['omega_b']      = [    2.237 ,   5e-1, None,      0.015, 0.01, 'cosmo']
+data.parameters['omega_cdm']    = [   0.1200,  1e-10, None,     0.0013,    1, 'cosmo']
+data.parameters['H0']           = [    67.36,     50, None,       0.54,    1, 'cosmo']
+data.parameters['ln10^{10}A_s'] = [    3.044,  1e-10, None,      0.015,    1, 'cosmo']
+data.parameters['n_s']          = [   0.9649,  1e-10, None,     0.0042,    1, 'cosmo']
+data.parameters['z_reio']       = [     7.67,      4,   12,       0.67,    1, 'cosmo']
+
+#data.parameters['delta_Neff']   = [         0.1,  1e-10, None,        0.1,    1, 'cosmo']
+#data.parameters['log10z_tr']    = [           3,     -3,    5,          1,    1, 'cosmo']
+
+# Nuisance parameter list, same call, except the name does not have to be a class name
+
+#data.parameters['A_planck']          = [ 1.000222,   0.9,   1.1,     0.0025,     1, 'nuisance']
+
+# Derived parameters
+
+data.parameters['tau_reio']            = [1, None, None, 0,     1,   'derived']
+data.parameters['Omega_Lambda']        = [1, None, None, 0,     1,   'derived']
+data.parameters['YHe']                 = [1, None, None, 0,     1,   'derived']
+data.parameters['100*theta_s']         = [0, None, None, 0,     1,   'derived']
+data.parameters['A_s']                 = [0, None, None, 0,  1e-9,   'derived']
+data.parameters['sigma8']              = [0, None, None, 0,     1,   'derived']
+data.parameters['Neff']                = [0, None, None, 0,     1,   'derived']
+data.parameters['omega_m']             = [0, None, None, 0,     1,   'derived']
+data.parameters['Omega_m']             = [0, None, None, 0,     1,   'derived']
+data.parameters['a_eq']                = [0, None, None, 0,     1,   'derived']
+data.parameters['z_rec']               = [0, None, None, 0,     1,   'derived']
+data.parameters['rs_rec']              = [0, None, None, 0,     1,   'derived']
+data.parameters['ra_rec']              = [0, None, None, 0,     1,   'derived']
+
+# Other cosmo parameters (fixed parameters, precision parameters, etc.)
+
+data.cosmo_arguments['sBBN file'] = data.path['cosmo']+'/external/bbn/sBBN.dat'
+# BBN file path is automatically set to match CLASS version if 'sBBN file' is requested
+# You can force the code to use the exact BBN file passed above with flag
+#data.custom_bbn_file = True
+
+data.cosmo_arguments['k_pivot'] = 0.05
+
+# In addition to the BSM relic,
+# the NH model features two massless
+# and one massive neutrino with m=0.06eV
+# with Neff_nu=3.044. See lines 1241-1351
+# of custom data.py for implementation.
+
+data.cosmo_arguments['N_ncdm'] = 1
+# Following lines are not necessary
+# since FD is default CLASS relic,
+# but are included for comparison with 
+# BE input param file.
+#data.cosmo_arguments['ncdm_psd_parameters'] = str(0)+', '+str(0)+', '+str(0)
+#data.cosmo_arguments['deg_ncdm'] = str(1)+','+str(1)
+# adjust multipole to S4 likelihood
+data.cosmo_arguments['l_max_scalars'] = 6500
+
+# These two are required to get sigma8 as a derived parameter
+# (class must compute the P(k) until sufficient k)
+data.cosmo_arguments['output'] = 'mPk'
+data.cosmo_arguments['P_k_max_h/Mpc'] = 1.
+
+# Even though this param file does not include S4 lensing information,
+# I am turning on halofit as S4 will easily distinguish between the linear
+# and non-linear theories. The run with lensing information included will
+# inform us the extent to which the non linear theory (which is not calibrated
+# for BSM cosmologies) could affect the results
+data.cosmo_arguments['non linear'] = 'halofit'
+
+#------ Mcmc parameters ----
+
+data.N=10
+data.write_step=5
