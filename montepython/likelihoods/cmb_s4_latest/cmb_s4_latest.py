@@ -24,7 +24,7 @@ class cmb_s4_latest(Likelihood):
       -2 ln L = Σℓ [(C_th - C_obs)^2 / Var].
 
     Observed spectra C_obs are taken from a fiducial file if available:
-      data/cmbs4_loverde_fiducial.dat  (columns: ℓ, C_TT, C_EE) else set C_obs = 0.
+      data/cmb_s4_latest_fiducial.dat  (columns: ℓ, C_TT, C_EE) else set C_obs = 0.
     """
     def __init__(self, path, data, command_line):
         # path -> .../likelihoods/cmb_s4_latest/cmb_s4_latest.data
@@ -91,7 +91,7 @@ class cmb_s4_latest(Likelihood):
         self.obs_ell = None
         self.obs_tt = None
         self.obs_ee = None
-        fid_path = os.path.join(data.path['data'], 'cmbs4_loverde_fiducial.dat')
+        fid_path = os.path.join(data.path['data'], 'cmb_s4_latest_fiducial.dat')
         if os.path.exists(fid_path):
             try:
                 # Columns: ell, C_TT, C_EE (assumed in same units as theory conversion below)
