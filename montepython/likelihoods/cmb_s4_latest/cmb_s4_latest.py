@@ -91,7 +91,7 @@ class cmb_s4_latest(Likelihood):
         self.obs_ell = None
         self.obs_tt = None
         self.obs_ee = None
-        fid_path = os.path.join(data.path['data'], 'cmb_s4_latest_fiducial.dat')
+        fid_path = os.path.join(data.path['data'], 'cmb_s4_latest', 'cmb_s4_latest_fiducial.dat')
         if os.path.exists(fid_path):
             try:
                 # Columns: ell, C_TT, C_EE (assumed in same units as theory conversion below)
