@@ -1,0 +1,58 @@
+# CMB-S4 likelihood from Brinckmann, Hooper et al. 1808.05955
+
+# This likelihood is based on the core_m5 likelihood, which
+# in turn builds on the fake planck bluebook likelihood with
+# modifications by T. Brinckmann and S. Clesse to include B-modes and
+# the CMB lensing potential. It is possible to use the lensing
+# auto- or cross-correlations alone, in combination with temperature
+# and polarization, or for delensing the temperature and polarization
+# spectra (e.g. if both lensing and B-mode polarization is desired)
+
+# Experimental configuration based on CMB-S4 science book (1610.02743)
+# DI 9/24/25: with updates to l_max and f_sky to reflect updated config from 2304.09166
+# See Brinckmann, Hooper et al. 1808.05955 for details
+
+# Where to read/write fiducial model
+cmb_s4_2025.data_directory     = data.path['data']
+cmb_s4_2025.fiducial_file      = 'cmb_s4_2025_fiducial.dat'
+
+# Experimental sensitivity
+# DI: updated 9-24-25 to have f_sky  match 2503.04671 value of 0.56. Very optimistic config!
+# DI: updated 8-2-25 to reset f_sky to old value of 0.40, as noise files at bottom are calibrated for that. 
+# Difference between these sky fractions seems to mean ~0.003 difference in sigma(Delta Neff) according to 1402.4108
+# Thus this likelihood is identical to cmb_s4, other than different fiducial file (ours uses Npipe values)
+# l_max_TT = 3000, l_max_EE = 3000, l_max_pp = 3000
+# i.e. no highl polarisation from kSZ or highl lensing
+cmb_s4_2025.l_min              = 30
+cmb_s4_2025.l_max              = 3000
+cmb_s4_2025.f_sky              = 0.40
+cmb_s4_2025.num_channels       = 1
+
+# Angular resolution
+# theta_fwhm must be in in arcmin
+# possible channels GHz [30, 40, 85, 95, 145, 155, 215, 270]
+# single channel forecast setup, 150 GHz
+cmb_s4_2025.theta_fwhm = [3.0]
+
+# Resolution for Temperature and Polarisation
+# sigma's must be in muK.arcmin
+cmb_s4_2025.sigma_T = [1.0]
+cmb_s4_2025.sigma_P = [1.41]
+
+# Do you want to include Bmodes (Gaussian approximation)?
+cmb_s4_2025.Bmodes = False
+cmb_s4_2025.delensing = False
+# minimum variance estimator noise file by D.C. Hooper and T. Brinckmann
+cmb_s4_2025.delensing_file = 'noise_cmb_s4.dat'
+
+# Do you want to include lensing extraction?
+cmb_s4_2025.LensingExtraction = True
+cmb_s4_2025.neglect_TD = True
+cmb_s4_2025.unlensed_clTTTEEE = False
+cmb_s4_2025.ExcludeTTTEEE = False
+
+# Noise spectrum from Brinckmann, Hooper et al. 1808.05955
+# using minimum variance noise estimate for the above settings
+# note with this likelihood the following noise file is not temporary
+cmb_s4_2025.temporary_Nldd_file = 'noise_cmb_s4.dat'
+

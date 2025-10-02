@@ -1,0 +1,7 @@
+# PR4 values for z_reio (following Astro-ph/2503.04671)
+# 2503.04671 provides constraints on tau_reio, but sampling tau_reio gives seg faults. Mean on z_reio instead determined by CLASS computation using best fit tau_reio and other fiducial values from same table. 1-sigma on z_reio matter same as those in PR4_z_reio_prior likelihood. This 1-sigma is the 1-sigma from my PR4 FD constraints, but it should be relatively unaffected even though fiducial cosmology is LCDM.
+# This likelihood is a prior on z_reio inspired
+# by simlow, the low multipole polarization 
+# likelihood from the Planck 2016 paper
+PR4_z_reio_prior.z_reio    = 8.014
+PR4_z_reio_prior.sigma  = 0.638

@@ -7,5 +7,5 @@
 from montepython.likelihood_class import Likelihood_mock_cmb
 
 
-class cmbs4_loverde(Likelihood_mock_cmb):
+class cmb_s4_2025(Likelihood_mock_cmb):
     pass
