@@ -18,7 +18,7 @@ cmb_s4_2025.fiducial_file      = 'cmb_s4_2025_fiducial.dat'
 
 # Experimental sensitivity
 # DI: updated 9-24-25 to have f_sky  match 2503.04671 value of 0.56. Very optimistic config!
-# DI: updated 8-2-25 to reset f_sky to old value of 0.40, as noise files at bottom are calibrated for that. 
+# DI: updated 10-2-25 to reset f_sky to old value of 0.40, as noise files at bottom are calibrated for that. 
 # Difference between these sky fractions seems to mean ~0.003 difference in sigma(Delta Neff) according to 1402.4108
 # Thus this likelihood is identical to cmb_s4, other than different fiducial file (ours uses Npipe values)
 # l_max_TT = 3000, l_max_EE = 3000, l_max_pp = 3000
