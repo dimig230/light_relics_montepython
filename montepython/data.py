@@ -158,6 +158,8 @@ class Data(object):
 
         :rtype: ordereddict
         """
+        # DI 1-27-26: other fixed arguments that won't be interfaced with cosmological code
+        self.other_arguments = {}
 
         # Arguments for PyMultiNest
         self.NS_param_names = []
@@ -1238,7 +1240,7 @@ class Data(object):
                 self.cosmo_arguments['sigma8'] = self.cosmo_arguments['S_8'] * ((0.3*h**2) / (omega_b+omega_cdm+omega_nu))**0.5
                 del self.cosmo_arguments[elem]
 
-            #DI 1-22-25: 
+            #DI LiMR handling:
             elif elem == 'delta_Neff':
             
                 # in general, delta_Neff is N_eff - N_eff_nu(SM) = N_eff - 3.044. 
@@ -1255,7 +1257,9 @@ class Data(object):
 
                 # we assume that the non-standard NCDM is extra massive species, not weird stuff in the massive neutrinos
                 # thus, without any non-standard NCDM, delta_Neff = delta_N_ur:
-                if 'log10z_tr' not in self.cosmo_arguments:
+                
+                all_arguments = self.cosmo_arguments | self.other_arguments
+                if 'log10z_tr' not in all_arguments and 'log10omega_LiMR' not in all_arguments:
                     # in case user didn't explicitly specify the absence of massive nu's:
                     if ('N_ncdm' not in self.cosmo_arguments): self.cosmo_arguments['N_ncdm']=0
                     # N_ur is N_ur from the massless nu's + delta_Neff
@@ -1263,8 +1267,9 @@ class Data(object):
                     del self.cosmo_arguments[elem]
                     
                 else:
-                    # with both delta_Neff and log10z_tr entered, we assume the delta_Neff comes from the (first) ncdm species. 
-                    
+                    # with both delta_Neff and (log10z_tr or log10omega_LiMR) entered, we assume the delta_Neff comes from the (first) ncdm species. 
+                    self.cosmo_arguments['N_ur'] = N_ur_nu[self.cosmo_arguments['N_ncdm']-1] # this is fixed
+
                     # store relevant constants
                     zeta3 = 1.2020569031595942
                     T0_CMB = 2.7255
@@ -1309,49 +1314,45 @@ class Data(object):
                         Q0_L = 2*zeta3*3/4
                         Q1_L = (math.pi**4)/15*7/8
             
-                    # store correct T_ncdm (in units of photon temp) for the first ncdm species. Further ncdm species assumed to have default T_ncdm = 0.71611 (these are the massive neutrinos).
-                    T0_L = T0_nu*pow(self.cosmo_arguments[elem]*2/g_ncdm*(7*math.pi**4/120)/Q1_L,1/4)
+                    # store correct characteristic momentem q_c (in units of photon temp) for the first ncdm species. Further ncdm species assumed to have default T_ncdm = 0.71611 (these are the massive neutrinos).
+                    q_c = T0_nu*pow(self.cosmo_arguments[elem]*2/g_ncdm*(7*math.pi**4/120)/Q1_L,1/4)
             
                     # this is the more accurate neutrino temperature (in units of photon temp) for CLASS input, see CLASS explanatory.ini 
                     T_nu = 0.71611
             
                     # the below array contains the appropriate inputs for T_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos, (3 - (N_ncdm - 1)) massless SM neutrinos, and 1 BSM ncdm species with radiation contribution delta_Neff at early times
                     T_ncdm_array = [
-                        T0_L,
-                        str(T0_L)+','+str(T_nu),
-                        str(T0_L)+','+str(T_nu)+','+str(T_nu),
-                        str(T0_L)+','+str(T_nu)+','+str(T_nu)+','+str(T_nu),
+                        q_c,
+                        str(q_c)+','+str(T_nu),
+                        str(q_c)+','+str(T_nu)+','+str(T_nu),
+                        str(q_c)+','+str(T_nu)+','+str(T_nu)+','+str(T_nu),
                     ]
                     
-                    # enter mcmc cosmo parameters into CLASS
-                    self.cosmo_arguments['N_ur'] = N_ur_nu[self.cosmo_arguments['N_ncdm']-1]
+                    # enter mcmc cosmo parameter for LiMR characteristic momentum into CLASS
                     self.cosmo_arguments['T_ncdm'] = T_ncdm_array[self.cosmo_arguments['N_ncdm']-1]
-                    
-            elif elem == 'log10z_tr':
-                # check that delta_Neff is also being sampled
-                if 'delta_Neff' in self.cosmo_arguments:
-                    z_tr = 10**(self.cosmo_arguments[elem])
+                    # remove non cosmo mcmc parameter
+                    del self.cosmo_arguments['delta_Neff']
 
-                    # store correct m_ncdm for the first ncdm species. Further ncdm species (the massive neutrinos) assumed to be degenerate in mass. 
-                    m_L = (z_tr+1)*(T0_L*T0_CMB*kelvin_to_eV)*Q1_L/Q0_L
+                    # Now handle LiMR mass
+                    if 'log10z_tr' in all_arguments:
+                        z_tr = 10**(all_arguments['log10z_tr'])
+                        m_L = (z_tr+1)*(q_c*T0_CMB*kelvin_to_eV)*Q1_L/Q0_L
+                    else:
+                        omega_LiMR = 10**(all_arguments['log10omega_LiMR'])
+                        m_L = omega_LiMR * 93.13858 * pow(T0_nu/q_c,3) * 2 / g_ncdm * 2*zeta3*3/4 / Q0_L #slightly more accurate value for m_nu/omega_nu = 93.14
                     
                     # without massive neutrinos, no need to calculate their masses 
                     if self.cosmo_arguments['N_ncdm'] == 1:
                         self.cosmo_arguments['m_ncdm'] = m_L
                     # with massive neutrinos, can either enter a total mass or use CLASS's default value of 0.06 eV, corresponding to the minimum total mass in the NH.
                     else: 
-                        # NOTICE THAT THE NON m_nu_tot=0.06eV CASE DOESN'T WORK!! m_nu_tot IS PERMANENTLY DELETED AFTER FIRST STEP
-                        # if 'm_nu_tot' in self.cosmo_arguments:
-                        #     m_nu_i = self.cosmo_arguments['m_nu_tot']/(self.cosmo_arguments['N_ncdm']-1)
-                        #     del self.cosmo_arguments['m_nu_tot']
-                        # else:
-                        #     m_nu_i = 0.06/(self.cosmo_arguments['N_ncdm']-1)
-
-                        # Since the above doesn't work, I resort to hardcoding in m_nu_tot instead. This is the total mass in the (degenerate) neutrino hierarchy:
-                        m_nu_tot = 0.06
+                        if 'm_nu_tot' in self.other_arguments:
+                            m_nu_tot = self.other_arguments['m_nu_tot']
+                        else:
+                            m_nu_tot = 0.06
                         m_nu_i = m_nu_tot/(self.cosmo_arguments['N_ncdm']-1)
                         
-                        # store the appropriate inputs for m_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos and 1 BSM ncdm species with transition redshift z_tr and radiation contribution delta_Neff
+                        # store the appropriate inputs for m_ncdm for cosmologies with (N_ncdm - 1) massive SM neutrinos and 1 BSM ncdm species with (transition redshift z_tr or abundance omega_LiMR) and radiation contribution delta_Neff
                         m_ncdm_array = [
                             str(m_L)+','+str(m_nu_i),
                             str(m_L)+','+str(m_nu_i)+','+str(m_nu_i),
@@ -1359,12 +1360,9 @@ class Data(object):
                         ]
                         self.cosmo_arguments['m_ncdm'] = m_ncdm_array[self.cosmo_arguments['N_ncdm']-2]
 
-                    del self.cosmo_arguments['delta_Neff']
-                    del self.cosmo_arguments['log10z_tr']
-                        
-                else:
-                    raise io_mp.ConfigurationError("log10z_tr as a sampling parameter requires delta_neff as a sampling parameter.")
-            
+            elif elem == 'log10z_tr' or elem == 'log10omega_LiMR':
+                del self.cosmo_arguments[elem]
+
             elif elem == 'sigma':
                 #need to update ncdm_psd_parameters and set quadrature strategy
                 self.cosmo_arguments['ncdm_psd_parameters'] = str(2)+', '+str(sigma)+', '+str(0)
@@ -1627,3 +1625,4 @@ if __name__ == "__main__":
     cosmo, data, command_line, _ = initialise('-o %s -p test.param' % folder)
     doctest.testmod(extraglobs={'data': data})
     shutil.rmtree(folder)
+
